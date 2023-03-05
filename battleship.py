@@ -44,6 +44,14 @@ def get_ship_placement(board, ship, length):
 
         x, y = convert_coordinate(coordinate)
         
+        if orientation.lower() == 'h':
+            if y + length > board_size:
+                print('Invalid placement. The ship goes out of bounds. Please try again.')
+                continue
+        else:
+            if x + length > board_size:
+                print('Invalid placement. The ship goes out of bounds. Please try again.')
+                continue
 
         board_copy = [row[:] for row in board]
         new_board, ship_positions = place_ship(board_copy, ship, length, orientation.lower(), x, y)
