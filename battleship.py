@@ -138,23 +138,25 @@ while True:
     ai_board = create_board(board_size)
     ai_ship_positions = []
     player_ship_positions = []
-
-    for ship, length in ships.items():
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print('Player\'s Turn')
-        print(f'Placing the {ship} ({length} cells).')
-        print('Player\'s Board:')
-        print_board(player_board)
-        placement, ship_positions = get_ship_placement(player_board, ship, length)
-        player_ship_positions.extend(ship_positions)
-        player_board = placement
-
+    test=True
+    if test:
+        player_ship_positions=[(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2), (4, 0), (4, 1)]
+        player_board=[['S', 'S', 'S', 'S', 'S', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O']]
+    else:
+        # Player setup
+        for ship, length in ships.items():
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print('Player\'s Turn')
+            print(f'Placing the {ship} ({length} cells).')
+            print('Player\'s Board:')
+            print_board(player_board)
+            placement, ship_positions = get_ship_placement(player_board, ship, length)
+            player_ship_positions.extend(ship_positions)
+            player_board = placement
+    # AI setup
     for ship, length in ships.items():
         ai_placement, ship_positions = random_ship_placement(ai_board, ship, length)
         ai_ship_positions.extend(ship_positions)
-    os.system('cls')
-    print('AI\'s Board:')
-    print_board(ai_board)
 
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
