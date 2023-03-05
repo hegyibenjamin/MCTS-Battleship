@@ -29,6 +29,26 @@ def place_ship(board, ship, length, orientation, x, y):
         ship_positions.append((x, y))
     return board, ship_positions
 
+def random_ship_placement(board, ship, length):
+    while True:
+        orientation = random.choice(['h', 'v'])
+        x = random.randint(0, board_size - 1)
+        y = random.randint(0, board_size - 1)
+
+        if orientation == 'h':
+            if y + length > board_size:
+                continue
+        else:
+            if x + length > board_size:
+                continue
+
+        board_copy = [row[:] for row in board]
+        new_board, ship_positions = place_ship(board_copy, ship, length, orientation.lower(), x, y)
+        if new_board is None:
+            continue
+        
+        return new_board, ship_positions
+
 def get_ship_placement(board, ship, length):
     while True:
         print(f'Placing the {ship} ({length} cells).')
@@ -130,12 +150,11 @@ while True:
         player_board = placement
 
     for ship, length in ships.items():
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print('AI\'s Turn')
-        ai_placement, ai_ship_positions = get_ship_placement(ai_board, ship, length)
-        print('AI\'s Board:')
-        print_board(ai_board)
-        input('Press Enter to continue...')
+        ai_placement, ship_positions = random_ship_placement(ai_board, ship, length)
+        ai_ship_positions.extend(ship_positions)
+    os.system('cls')
+    print('AI\'s Board:')
+    print_board(ai_board)
 
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
