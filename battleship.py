@@ -10,10 +10,13 @@ def create_board(size):
     return board
 
 def print_board(board):
-    print('   A B C D E F G H I J')
+    print('     A B C D E F G H I J')
     for i in range(len(board)):
         row = ' '.join(board[i])
-        print(f'{i}  {row}')
+        if i+1<10:
+            print(f'{i+1}    {row}')
+        else:
+            print(f'{i+1}   {row}')
 
 def place_ship(board, ship, length, orientation, x, y):
     ship_positions = []
@@ -21,7 +24,6 @@ def place_ship(board, ship, length, orientation, x, y):
         positions = [(x, y + i) for i in range(length)]
     else:
         positions = [(x + i, y) for i in range(length)]
-
     for x, y in positions:
         board[x][y] = 'S'
         ship_positions.append((x, y))
@@ -41,6 +43,7 @@ def get_ship_placement(board, ship, length):
             continue
 
         x, y = convert_coordinate(coordinate)
+        
 
         board_copy = [row[:] for row in board]
         new_board, ship_positions = place_ship(board_copy, ship, length, orientation.lower(), x, y)
@@ -52,14 +55,13 @@ def get_ship_placement(board, ship, length):
 
 def convert_coordinate(coordinate):
     column = ord(coordinate[0].upper()) - ord('A')
-    row = int(coordinate[1:])
+    row = int(coordinate[1:])-1 
     return row, column
 
 def is_valid_coordinate(coordinate):
     if len(coordinate) < 2:
         return False
-    column = ord(coordinate[0].upper()) - ord('A')
-    row = int(coordinate[1:])
+    row, column = convert_coordinate(coordinate)
     return 0 <= column < board_size and 0 <= row < board_size
 
 def get_player_guess():
