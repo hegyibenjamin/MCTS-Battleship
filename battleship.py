@@ -114,15 +114,7 @@ def update_board(board, guess, result):
         board[row][col] = 'M'
 
 def check_victory(ship_positions, guesses):
-    return all(guess in ship_positions for guess in guesses)
-
-def check_sunk_ships(ship_positions, guesses):
-    sunk_ships = []
-    for ship, length in ships.items():
-        ship_cells = [cell for cell in ship_positions if cell in guesses]
-        if len(ship_cells) == length:
-            sunk_ships.append(ship)
-    return sunk_ships
+    return all(position in guesses for position in ship_positions)
 
 def play_again():
     choice = input('Do you want to play again? (y/n): ')
@@ -138,6 +130,8 @@ while True:
     ai_board = create_board(board_size)
     ai_ship_positions = []
     player_ship_positions = []
+    player_guesses = []
+    ai_guesses = []
     test=True
     if test:
         player_ship_positions=[(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2), (4, 0), (4, 1)]
@@ -169,6 +163,7 @@ while True:
 
         # Player's turn
         guess = get_player_guess()
+        player_guesses.extend(guess)
 
         if guess in ai_ship_positions:
             result = 'hit'
@@ -183,16 +178,13 @@ while True:
         else:
             print('You missed.')
 
-        sunk_ships = check_sunk_ships(ai_ship_positions, player_ship_positions)
-        if sunk_ships:
-            print(f'You sunk the following ship(s): {", ".join(sunk_ships)}!')
-
-        if check_victory(ai_ship_positions, player_ship_positions):
+        if check_victory(ai_ship_positions, player_guesses):
             print('Congratulations! You sank all the AI\'s ships!')
             break
 
         # AI's turn
         ai_guess = random.choice([(x, y) for x in range(board_size) for y in range(board_size)])
+        ai_guesses.extend(ai_guess)
         if ai_guess in player_ship_positions:
             result = 'hit'
             player_ship_positions.remove(ai_guess)
@@ -200,15 +192,12 @@ while True:
             result = 'miss'
 
         update_board(player_board, ai_guess, result)
-
+        
         print('\nAI\'s Guess:')
-        print('Player\'s Board:')
-        print_board(player_board)
-        print(f'AI guessed: {chr(ai_guess[1] + ord("A"))}{ai_guess[0]} - {result}')
+        print(f'AI guessed: {chr(ai_guess[1] + ord("A"))}{ai_guess[0]+1} - {result}')
 
-        if check_victory(player_ship_positions, ai_ship_positions):
+        if check_victory(player_ship_positions, ai_guesses):
             print('AI sank all your ships! You lost.')
             break
-
     if not play_again():
         break
