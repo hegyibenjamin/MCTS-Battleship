@@ -120,7 +120,45 @@ def play_again():
     choice = input('Do you want to play again? (y/n): ')
     return choice.lower() == 'y'
 
+def monte_carlo_tree_search(board, ship_positions, ai_guesses):
+    available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
+    best_score = float('-inf')
+    best_guess = None
+    depth = 40
+    for _ in range(10):
+        guess = random.choice(available_positions)
+        score = simulate_guess(board, ship_positions, guess, depth)
+        if score > best_score:
+            best_score = score
+            best_guess = guess
+    return best_guess
 
+def simulate_guess(board, ship_positions, guess,depth):
+    board_copy = [row[:] for row in board]
+    ship_positions_copy=[position[:] for position in ship_positions]
+    score=0
+    if guess in ship_positions:
+        result = 'hit'
+        ship_positions_copy.remove(guess)
+        score = score + 1/17
+    else:
+        result = 'miss'
+    score = score + simulate_random_guesses(board_copy, ship_positions_copy,depth)
+    print(score)
+    return score
+
+def simulate_random_guesses(board, ship_positions,depth):
+    guesses = []
+    hits=0
+    i=0
+    while (ship_positions and i!=depth):
+        i = i + 1
+        guess = random.choice([(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in guesses])
+        guesses.append(guess)
+        if guess in ship_positions:
+            ship_positions.remove(guess)
+            hits+=1
+    return hits/depth
 # Game loop
 while True:
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -183,7 +221,7 @@ while True:
             break
 
         # AI's turn
-        ai_guess = random.choice([(x, y) for x in range(board_size) for y in range(board_size)])
+        ai_guess = monte_carlo_tree_search(player_board, player_ship_positions, ai_guesses)
         ai_guesses.extend(ai_guess)
         if ai_guess in player_ship_positions:
             result = 'hit'
