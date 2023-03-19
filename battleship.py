@@ -1,10 +1,6 @@
 import random
 import os
 
-# Game setup
-board_size = 10
-ships = {'Carrier': 5, 'Battleship': 4, 'Cruiser': 3, 'Submarine': 3, 'Destroyer': 2}
-
 def create_board(size):
     board = [['O' for _ in range(size)] for _ in range(size)]
     return board
@@ -120,12 +116,11 @@ def play_again():
     choice = input('Do you want to play again? (y/n): ')
     return choice.lower() == 'y'
 
-def monte_carlo_tree_search(board, ship_positions, ai_guesses):
+def monte_carlo_tree_search(board, ship_positions, ai_guesses, depth, steps):
     available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
     best_score = float('-inf')
     best_guess = None
-    depth = 40
-    for _ in range(10):
+    for _ in range(steps):
         guess = random.choice(available_positions)
         score = simulate_guess(board, ship_positions, guess, depth)
         if score > best_score:
@@ -140,11 +135,11 @@ def simulate_guess(board, ship_positions, guess,depth):
     if guess in ship_positions:
         result = 'hit'
         ship_positions_copy.remove(guess)
-        score = score + 1/17
+        score = score + 1
     else:
         result = 'miss'
-    score = score + simulate_random_guesses(board_copy, ship_positions_copy,depth)
-    print(score)
+    if depth>1:
+        score = score + simulate_random_guesses(board_copy, ship_positions_copy,depth)
     return score
 
 def simulate_random_guesses(board, ship_positions,depth):
@@ -158,7 +153,12 @@ def simulate_random_guesses(board, ship_positions,depth):
         if guess in ship_positions:
             ship_positions.remove(guess)
             hits+=1
-    return hits/depth
+    return hits
+
+# Game setup
+board_size = 10
+ships = {'Carrier': 5, 'Battleship': 4, 'Cruiser': 3, 'Submarine': 3, 'Destroyer': 2}
+
 # Game loop
 while True:
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -221,7 +221,9 @@ while True:
             break
 
         # AI's turn
-        ai_guess = monte_carlo_tree_search(player_board, player_ship_positions, ai_guesses)
+        depth=1
+        steps=20
+        ai_guess = monte_carlo_tree_search(player_board, player_ship_positions, ai_guesses, depth, steps)
         ai_guesses.extend(ai_guess)
         if ai_guess in player_ship_positions:
             result = 'hit'
@@ -237,5 +239,6 @@ while True:
         if check_victory(player_ship_positions, ai_guesses):
             print('AI sank all your ships! You lost.')
             break
+        #input("Press enter to continue")
     if not play_again():
         break
