@@ -146,7 +146,7 @@ def simulate_random_guesses(board, ship_positions,depth):
     guesses = []
     hits=0
     i=0
-    while (ship_positions and i!=depth):
+    while (ship_positions and i!=depth-1):
         i = i + 1
         guess = random.choice([(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in guesses])
         guesses.append(guess)
@@ -154,6 +154,60 @@ def simulate_random_guesses(board, ship_positions,depth):
             ship_positions.remove(guess)
             hits+=1
     return hits
+
+def minimax(board, ship_positions, ai_guesses, depth):
+    available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
+    best_score = float('-inf')
+    best_guess = None
+
+    for guess in available_positions:
+        score = min_score(board, ship_positions, guess, depth)
+        if score > best_score:
+            best_score = score
+            best_guess = guess
+
+    return best_guess
+
+def max_score(board, ship_positions, guess, depth):
+    board_copy = [row[:] for row in board]
+    ship_positions_copy = ship_positions[:]
+    score = 0
+
+    if guess in ship_positions:
+        result = 'hit'
+        ship_positions_copy.remove(guess)
+        score = 1
+    else:
+        result = 'miss'
+
+    if depth > 1 and ship_positions_copy:
+        score += min_score(board_copy, ship_positions_copy, guess, depth - 1)
+
+    return score
+
+def min_score(board, ship_positions, guess, depth):
+    available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
+    min_score = float('inf')
+
+    for opponent_guess in available_positions:
+        board_copy = [row[:] for row in board]
+        ship_positions_copy = ship_positions[:]
+        score = 0
+
+        if opponent_guess in ship_positions:
+            result = 'hit'
+            ship_positions_copy.remove(opponent_guess)
+            score = -1
+        else:
+            result = 'miss'
+
+        if depth > 1 and ship_positions_copy:
+            score += max_score(board_copy, ship_positions_copy, guess, depth - 1)
+
+        if score < min_score:
+            min_score = score
+
+    return min_score
 
 # Game setup
 board_size = 10
@@ -221,10 +275,10 @@ while True:
             break
 
         # AI's turn
-        depth=1
+        depth=3
         steps=20
-        ai_guess = monte_carlo_tree_search(player_board, player_ship_positions, ai_guesses, depth, steps)
-        ai_guesses.extend(ai_guess)
+        ai_guess = minimax(player_board, player_ship_positions, ai_guesses, depth)
+        ai_guesses+=[(ai_guess)]
         if ai_guess in player_ship_positions:
             result = 'hit'
             player_ship_positions.remove(ai_guess)
