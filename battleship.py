@@ -1,5 +1,6 @@
 import random
 import os
+import time
 
 def create_board(size):
     board = [['O' for _ in range(size)] for _ in range(size)]
@@ -30,19 +31,16 @@ def random_ship_placement(board, ship, length):
         orientation = random.choice(['h', 'v'])
         x = random.randint(0, board_size - 1)
         y = random.randint(0, board_size - 1)
-
         if orientation == 'h':
             if y + length > board_size:
                 continue
         else:
             if x + length > board_size:
                 continue
-
         board_copy = [row[:] for row in board]
         new_board, ship_positions = place_ship(board_copy, ship, length, orientation.lower(), x, y)
         if new_board is None:
             continue
-        
         return new_board, ship_positions
 
 def get_ship_placement(board, ship, length):
@@ -52,14 +50,11 @@ def get_ship_placement(board, ship, length):
         if orientation.lower() not in ['h', 'v']:
             print('Invalid orientation. Please try again.')
             continue
-
         coordinate = input('Enter the starting coordinate (e.g., A3): ')
         if not is_valid_coordinate(coordinate):
             print('Invalid coordinate. Please try again.')
             continue
-
-        x, y = convert_coordinate(coordinate)
-        
+        x, y = convert_coordinate(coordinate)     
         if orientation.lower() == 'h':
             if y + length > board_size:
                 print('Invalid placement. The ship goes out of bounds. Please try again.')
@@ -68,7 +63,6 @@ def get_ship_placement(board, ship, length):
             if x + length > board_size:
                 print('Invalid placement. The ship goes out of bounds. Please try again.')
                 continue
-
         board_copy = [row[:] for row in board]
         new_board, ship_positions = place_ship(board_copy, ship, length, orientation.lower(), x, y)
         if new_board is None:
@@ -116,20 +110,19 @@ def play_again():
     choice = input('Do you want to play again? (y/n): ')
     return choice.lower() == 'y'
 
-def monte_carlo_tree_search(board, ship_positions, ai_guesses, depth, steps):
+def monte_carlo_tree_search(ship_positions, ai_guesses, depth, steps):
     available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
     best_score = float('-inf')
     best_guess = None
     for _ in range(steps):
         guess = random.choice(available_positions)
-        score = simulate_guess(board, ship_positions, guess, depth)
+        score = simulate_guess(ship_positions, guess, depth)
         if score > best_score:
             best_score = score
             best_guess = guess
     return best_guess
 
-def simulate_guess(board, ship_positions, guess,depth):
-    board_copy = [row[:] for row in board]
+def simulate_guess(ship_positions, guess,depth):
     ship_positions_copy=[position[:] for position in ship_positions]
     score=0
     if guess in ship_positions:
@@ -139,10 +132,10 @@ def simulate_guess(board, ship_positions, guess,depth):
     else:
         result = 'miss'
     if depth>1:
-        score = score + simulate_random_guesses(board_copy, ship_positions_copy,depth)
+        score = score + simulate_random_guesses(ship_positions_copy,depth)
     return score
 
-def simulate_random_guesses(board, ship_positions,depth):
+def simulate_random_guesses(ship_positions,depth):
     guesses = []
     hits=0
     i=0
@@ -155,48 +148,38 @@ def simulate_random_guesses(board, ship_positions,depth):
             hits+=1
     return hits
 
-def minimax(me, them, ai_guesses, depth):
-    available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
-
-    max_score = -9999999999999
+def minimax(my_positions, their_positions, ai_guesses, player_guesses, depth, is_ai):
+    if is_ai:
+        available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
+    else:
+        available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in player_guesses]
+    max_score = float('-inf')
     guess = None
-
-    # loop through all our possible options
     for pos in available_positions:
-
         score = 0
-        if pos in them:
+        if pos in their_positions:
             score = 1
-
         # alpha-beta pruning: don't calculate if we can't beat our best option
         if score < max_score:
             continue
-
-        ms = 0
+        enemy_max_score = 0
         if depth > 1:
             # recursively calculate the opponent's best option
-            thatScore, _ = minimax(them, me, [], depth-1)
-            if thatScore > ms:
-                ms = thatScore
-        score -= ms
-
-        # if we beat our previous best, store the new best
+            enemy_score, _ = minimax(their_positions, my_positions, ai_guesses, player_guesses, depth-1, not is_ai)
+            if enemy_score > enemy_max_score:
+                enemy_max_score = enemy_score
+        score -= enemy_max_score
         if score > max_score:
             max_score = score
             guess = pos
-
     return max_score, guess
-
-
-# Game setup
-board_size = 10
-ships = {'Carrier': 5, 'Battleship': 4, 'Cruiser': 3, 'Submarine': 3, 'Destroyer': 2}
 
 # Game loop
 while True:
     os.system('cls' if os.name == 'nt' else 'clear')
-
     # Game setup
+    board_size = 10
+    ships = {'Carrier': 5, 'Battleship': 4, 'Cruiser': 3, 'Submarine': 3, 'Destroyer': 2}
     player_board = create_board(board_size)
     ai_board = create_board(board_size)
     ai_ship_positions = []
@@ -222,53 +205,43 @@ while True:
     for ship, length in ships.items():
         ai_placement, ship_positions = random_ship_placement(ai_board, ship, length)
         ai_ship_positions.extend(ship_positions)
-
+    #Gameplay
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
-
         print('Player\'s Turn')
         print('Player\'s Board:')
         print_board(player_board)
         print('AI\'s Board:')
         print_board(ai_board)
-
         # Player's turn
         guess = get_player_guess()
         player_guesses.extend(guess)
-
         if guess in ai_ship_positions:
             result = 'hit'
             ai_ship_positions.remove(guess)
         else:
             result = 'miss'
-
         update_board(ai_board, guess, result)
-
         if result == 'hit':
             print('You hit a ship!')
         else:
             print('You missed.')
-
         if check_victory(ai_ship_positions, player_guesses):
             print('Congratulations! You sank all the AI\'s ships!')
             break
-
         # AI's turn
-        depth=3
-        steps=20
-        _, ai_guess = minimax(ai_ship_positions, player_ship_positions, ai_guesses, depth)
+        depth=1
+        steps=30
+        ai_guess = monte_carlo_tree_search(player_ship_positions, ai_guesses, depth, steps)
         ai_guesses+=[(ai_guess)]
         if ai_guess in player_ship_positions:
             result = 'hit'
             player_ship_positions.remove(ai_guess)
         else:
             result = 'miss'
-
-        update_board(player_board, ai_guess, result)
-        
+        update_board(player_board, ai_guess, result)     
         print('\nAI\'s Guess:')
         print(f'AI guessed: {chr(ai_guess[1] + ord("A"))}{ai_guess[0]+1} - {result}')
-
         if check_victory(player_ship_positions, ai_guesses):
             print('AI sank all your ships! You lost.')
             break
