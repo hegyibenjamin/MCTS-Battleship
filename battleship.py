@@ -128,7 +128,7 @@ def simulate_guess(ship_positions, guess,depth):
     if guess in ship_positions:
         result = 'hit'
         ship_positions_copy.remove(guess)
-        score = score + 1
+        score = score + 2
     else:
         result = 'miss'
     if depth>1:
@@ -148,7 +148,7 @@ def simulate_random_guesses(ship_positions,depth):
             hits+=1
     return hits
 
-def minimax(my_positions, their_positions, ai_guesses, player_guesses, depth, is_ai):
+def alpha_beta(my_positions, their_positions, ai_guesses, player_guesses, depth, is_ai):
     if is_ai:
         available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
     else:
@@ -159,13 +159,11 @@ def minimax(my_positions, their_positions, ai_guesses, player_guesses, depth, is
         score = 0
         if pos in their_positions:
             score = 1
-        # alpha-beta pruning: don't calculate if we can't beat our best option
         if score < max_score:
             continue
         enemy_max_score = 0
         if depth > 1:
-            # recursively calculate the opponent's best option
-            enemy_score, _ = minimax(their_positions, my_positions, ai_guesses, player_guesses, depth-1, not is_ai)
+            enemy_score, _ = alpha_beta(their_positions, my_positions, ai_guesses, player_guesses, depth-1, not is_ai)
             if enemy_score > enemy_max_score:
                 enemy_max_score = enemy_score
         score -= enemy_max_score
@@ -230,9 +228,13 @@ while True:
             print('Congratulations! You sank all the AI\'s ships!')
             break
         # AI's turn
-        depth=1
-        steps=30
-        ai_guess = monte_carlo_tree_search(player_ship_positions, ai_guesses, depth, steps)
+        depth=3
+        steps=40
+        start_time = time.time()
+        _,ai_guess = alpha_beta(ai_ship_positions, player_ship_positions, ai_guesses, player_guesses, depth, True)
+        end_time = time.time()
+        elapsed_time = (end_time - start_time) * 1000
+        print(f"Elapsed time: {elapsed_time:.2f} ms")
         ai_guesses+=[(ai_guess)]
         if ai_guess in player_ship_positions:
             result = 'hit'
