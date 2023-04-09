@@ -126,11 +126,8 @@ def simulate_guess(ship_positions, guess,depth):
     ship_positions_copy=[position[:] for position in ship_positions]
     score=0
     if guess in ship_positions:
-        result = 'hit'
         ship_positions_copy.remove(guess)
         score = score + 2
-    else:
-        result = 'miss'
     if depth>1:
         score = score + simulate_random_guesses(ship_positions_copy,depth)
     return score
@@ -147,6 +144,38 @@ def simulate_random_guesses(ship_positions,depth):
             ship_positions.remove(guess)
             hits+=1
     return hits
+
+def minimax(my_positions, their_positions, ai_guesses, player_guesses, depth, is_ai):
+    if depth == 0:
+        return 0, None
+    
+    if is_ai:
+        available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
+    else:
+        available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in player_guesses]
+    best_score = float('inf')
+    if is_ai:
+        for pos in available_positions:
+            score = 0
+            if pos in their_positions:
+                score = 1
+            minimizing, _ = minimax(their_positions, my_positions, ai_guesses + [pos], player_guesses, depth - 1, not is_ai)
+            score -= minimizing
+            if score > best_score:
+                best_score = score
+                best_pos = pos
+        return best_score, best_pos
+    else:
+        for pos in available_positions:
+            score = 0
+            if pos in my_positions:
+                score = -1
+            maximizing, _ = minimax(my_positions, their_positions, ai_guesses, player_guesses + [pos], depth - 1, not is_ai)
+            score += maximizing
+            if score < best_score:
+                best_score = score
+                best_pos = pos
+        return best_score, best_pos
 
 def alpha_beta(my_positions, their_positions, ai_guesses, player_guesses, depth, is_ai):
     if is_ai:
@@ -187,7 +216,16 @@ while True:
     test=True
     if test:
         player_ship_positions=[(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2), (4, 0), (4, 1)]
-        player_board=[['S', 'S', 'S', 'S', 'S', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'], ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O']]
+        player_board=[['S', 'S', 'S', 'S', 'S', 'O', 'O', 'O', 'O', 'O'],
+                      ['S', 'S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['S', 'S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['S', 'S', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+                      ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O']]
     else:
         # Player setup
         for ship, length in ships.items():
@@ -231,7 +269,7 @@ while True:
         depth=3
         steps=40
         start_time = time.time()
-        _,ai_guess = alpha_beta(ai_ship_positions, player_ship_positions, ai_guesses, player_guesses, depth, True)
+        _,ai_guess = minimax(ai_ship_positions, player_ship_positions, ai_guesses, player_guesses, depth, True)
         end_time = time.time()
         elapsed_time = (end_time - start_time) * 1000
         print(f"Elapsed time: {elapsed_time:.2f} ms")
