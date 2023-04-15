@@ -82,10 +82,10 @@ def is_valid_coordinate(coordinate):
     row, column = convert_coordinate(coordinate)
     return 0 <= column < board_size and 0 <= row < board_size
 
-def get_player_guess():
+def get_player_guess(player_guesses):
     while True:
         guess = input('Enter your guess (e.g., A3): ')
-        if is_valid_coordinate(guess):
+        if is_valid_coordinate(guess) and not (convert_coordinate(guess) in player_guesses):
             return convert_coordinate(guess)
         else:
             print('Invalid guess. Please try again.')
@@ -148,30 +148,32 @@ def simulate_random_guesses(ship_positions,depth):
 def minimax(my_positions, their_positions, ai_guesses, player_guesses, depth, is_ai):
     if depth == 0:
         return 0, None
-    
+
     if is_ai:
         available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in ai_guesses]
     else:
         available_positions = [(x, y) for x in range(board_size) for y in range(board_size) if (x, y) not in player_guesses]
-    best_score = float('inf')
+
     if is_ai:
+        best_score = float('-inf')
         for pos in available_positions:
             score = 0
             if pos in their_positions:
                 score = 1
-            minimizing, _ = minimax(their_positions, my_positions, ai_guesses + [pos], player_guesses, depth - 1, not is_ai)
-            score -= minimizing
+            maximizing, _ = minimax(their_positions, my_positions, ai_guesses + [pos], player_guesses, depth - 1, not is_ai)
+            score -= maximizing
             if score > best_score:
                 best_score = score
                 best_pos = pos
         return best_score, best_pos
     else:
+        best_score = float('inf')
         for pos in available_positions:
             score = 0
             if pos in my_positions:
                 score = -1
-            maximizing, _ = minimax(my_positions, their_positions, ai_guesses, player_guesses + [pos], depth - 1, not is_ai)
-            score += maximizing
+            minimizing, _ = minimax(my_positions, their_positions, ai_guesses, player_guesses + [pos], depth - 1, not is_ai)
+            score += minimizing
             if score < best_score:
                 best_score = score
                 best_pos = pos
@@ -200,7 +202,24 @@ def alpha_beta(my_positions, their_positions, ai_guesses, player_guesses, depth,
             max_score = score
             guess = pos
     return max_score, guess
-
+def run_algorithm(which_algorithm):
+    depth=3
+    steps=80
+    if(which_algorithm.lower()=='minimax'):
+        start_time = time.time()
+        _,ai_guess = minimax(ai_ship_positions, player_ship_positions, ai_guesses, player_guesses, depth, True)
+        end_time = time.time()
+    if(which_algorithm.lower()=='alpha-beta'):
+        start_time = time.time()
+        _,ai_guess = alpha_beta(ai_ship_positions, player_ship_positions, ai_guesses, player_guesses, depth, True)
+        end_time = time.time()
+    if(which_algorithm.lower()=='monte carlo'):
+        start_time = time.time()
+        ai_guess = monte_carlo_tree_search(player_ship_positions, ai_guesses, depth, steps)
+        end_time = time.time()
+    elapsed_time = (end_time - start_time) * 1000
+    print(f"Elapsed time of {which_algorithm}: {elapsed_time:.2f} ms")
+    return ai_guess
 # Game loop
 while True:
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -250,8 +269,8 @@ while True:
         print('AI\'s Board:')
         print_board(ai_board)
         # Player's turn
-        guess = get_player_guess()
-        player_guesses.extend(guess)
+        guess = get_player_guess(player_guesses)
+        player_guesses+=[(guess)]
         if guess in ai_ship_positions:
             result = 'hit'
             ai_ship_positions.remove(guess)
@@ -266,14 +285,9 @@ while True:
             print('Congratulations! You sank all the AI\'s ships!')
             break
         # AI's turn
-        depth=3
-        steps=40
-        start_time = time.time()
-        _,ai_guess = minimax(ai_ship_positions, player_ship_positions, ai_guesses, player_guesses, depth, True)
-        end_time = time.time()
-        elapsed_time = (end_time - start_time) * 1000
-        print(f"Elapsed time: {elapsed_time:.2f} ms")
-        ai_guesses+=[(ai_guess)]
+        which_algorithm = 'monte carlo'
+        ai_guess = run_algorithm(which_algorithm)
+        ai_guesses += [(ai_guess)]
         if ai_guess in player_ship_positions:
             result = 'hit'
             player_ship_positions.remove(ai_guess)
