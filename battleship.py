@@ -43,7 +43,7 @@ def random_ship_placement(board, ship, length):
             continue
         return new_board, ship_positions
 
-def get_ship_placement(board, ship, length):
+def get_ship_placement(board, ship, length, current_set_positions):
     while True:
         print(f'Placing the {ship} ({length} cells).')
         orientation = input('Enter the orientation (h for horizontal, v for vertical): ')
@@ -51,7 +51,7 @@ def get_ship_placement(board, ship, length):
             print('Invalid orientation. Please try again.')
             continue
         coordinate = input('Enter the starting coordinate (e.g., A3): ')
-        if not is_valid_coordinate(coordinate):
+        if not is_valid_coordinate(coordinate) or convert_coordinate(coordinate) in current_set_positions:
             print('Invalid coordinate. Please try again.')
             continue
         x, y = convert_coordinate(coordinate)     
@@ -232,7 +232,7 @@ while True:
     player_ship_positions = []
     player_guesses = []
     ai_guesses = []
-    test=True
+    test=False
     if test:
         player_ship_positions=[(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1), (3, 2), (4, 0), (4, 1)]
         player_board=[['S', 'S', 'S', 'S', 'S', 'O', 'O', 'O', 'O', 'O'],
@@ -253,8 +253,8 @@ while True:
             print(f'Placing the {ship} ({length} cells).')
             print('Player\'s Board:')
             print_board(player_board)
-            placement, ship_positions = get_ship_placement(player_board, ship, length)
-            player_ship_positions.extend(ship_positions)
+            placement, ship_positions = get_ship_placement(player_board, ship, length,player_ship_positions)
+            player_ship_positions+=(ship_positions)
             player_board = placement
     # AI setup
     for ship, length in ships.items():
